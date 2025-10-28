@@ -1,0 +1,136 @@
+@extends('admin.layout.app')
+@section('content')
+    <div class="content px-0">
+        <div class="container-fluid">
+            <div class="card m-b-30">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h4 class="mt-0 header-title">All Blog</h4>
+                        </div>
+                        <a href="{{ route('admin.blog.create') }}" class="btn btn-primary waves-effect waves-light">Add
+                            New</a>
+                    </div>
+                    <hr class="mb-0">
+                    <div class="table-rep-plugin mx-n3">
+                        <div class="table-responsive b-0" data-pattern="priority-columns">
+                            <table id="myDataTable" class="table table-bordered" cellspacing="0" width="100%">
+                                <thead>
+                                    <tr>
+                                        <th>Image</th>
+                                        <th>Title</th>
+                                        <th>Create Date</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+@section('customJs')
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.3/css/dataTables.dataTables.css" />
+    <script src="https://cdn.datatables.net/2.1.3/js/dataTables.js"></script>
+    <script>
+        //Load Datatable
+        function reload_data_table(ele) {
+            $(ele).DataTable().ajax.reload(null, false);
+        }
+        $(document).ready(function() {
+            $('#myDataTable').DataTable({
+                "pageLength": 50,
+                "lengthMenu": [10, 20, 50, 100, 200],
+                "language": {
+                    "lengthMenu": '_MENU_',
+                    "sSearch": "",
+                    "searchPlaceholder": "Search records"
+                },
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    url: "{{ route('admin.blog.fetchAllList') }}",
+                    type: "POST",
+                    data: {}
+                },
+                "columnDefs": [{
+                    "orderable": false,
+                    "targets": [0, 3]
+                }, ],
+                "order": [
+                    [0, 'asc']
+                ],
+            });
+        });
+
+        function updateStatus(id) {
+            event.preventDefault();
+            webinaFire({
+                icon: "question",
+                title: "Are you sure to change status?",
+                acceptButton: "Yes, change it!",
+                cancelButton: "Cancel",
+                message: "",
+                accept: function() {
+                    if ($("#" + id + "_status").is(":checked")) {
+                        var status = 0;
+                    } else {
+                        var status = 1;
+                    }
+                    $.ajax({
+                        url: "{{ route('admin.blog.status') }}",
+                        method: 'POST',
+                        data: {
+                            id: id,
+                            status: status
+                        },
+                        dataType: 'JSON',
+                        success: function(data) {
+                            webinaToast({
+                                type: data.type,
+                                message: data.text
+                            });
+                            if (data.type == 'success') {
+                                reload_data_table('#myDataTable');
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        function deleteBlog(id) {
+            event.preventDefault();
+            webinaFire({
+                icon: "question",
+                title: "Are you sure to Delete?",
+                acceptButton: "Yes, Delete it!",
+                cancelButton: "Cancel",
+                message: "",
+                accept: function() {
+                    $.ajax({
+                        url: "{{ route('admin.blog.delete') }}",
+                        type: 'delete',
+                        data: {
+                            id: id
+                        },
+                        dataType: 'json',
+                        success: function(data) {
+                            webinaToast({
+                                type: data.type,
+                                message: data.text
+                            });
+                            if (data.type == 'success') {
+                                $(".active_row").fadeOut(400, function() {
+                                    $(this).remove();
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+@endsection
